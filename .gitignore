@@ -1,3 +1,8 @@
-mod_check.py
-.venv
+.venv/
+.env
 __pycache__/
+
+/src/models/
+/src/test_interpreter.py
+/src/test_executor.py
+/src/test_llm_executor.py
