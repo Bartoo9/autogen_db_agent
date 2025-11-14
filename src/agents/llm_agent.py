@@ -1,13 +1,14 @@
 from dataclasses import dataclass
-from autogen_core import RoutedAgent, DefaultTopicId, MessageContext, default_subscription, message_handler
+from autogen_core import RoutedAgent, MessageContext, default_subscription, message_handler
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+from autogen_core.models import UserMessage, SystemMessage
+
 from src.agents.db_executor import SQLMessage
 
-from autogen_ext.models.openai import OpenAIChatCompletionClient
-from autogen_core.models import UserMessage
 import os
 from dotenv import load_dotenv
 
-from gpt4all import GPT4All
+# from gpt4all import GPT4All
 
 @dataclass 
 class PromptMessage:
@@ -20,73 +21,72 @@ class LLMAgent(RoutedAgent):
         load_dotenv()
 
         self.db_executor_id = db_executor_id
-        self.model = GPT4All("gpt4all-mini-orca", model_path="/home/barto/Downloads/orca-mini-3b-gguf2-q4_0.gguf")
+        self.model = OpenAIChatCompletionClient(
+            model='gemini-2.0-flash',
+            api_key=os.getenv("GEMINI_API_KEY"),
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
+        
+        with open("src/models/1-postgres-sakila-schema.sql", "r") as f:
+            self.schema = f.read()
+        
+        self.system_prompt = f"""
+                            You are a SQL generation assistant for the Sakila PostgreSQL database.
 
+                            RULES:
+                            - Return ONLY SQL.
+                            - No Markdown, no backticks, no explanations.
+                            - Use only tables/columns from this schema:
+                            - You MUST always return exactly one SQL statement.
+                            - If multiple values are needed, use subqueries in a single SELECT.
+                            - Use aliases when using subqueries to retrive multiple results.
+
+                            Schema:
+                            {self.schema}
+                            """
+        
     @message_handler
     async def handle_message(self, message: PromptMessage, ctx: MessageContext) -> None:
         print(f"\n[LLMAgent received prompt]: {message.prompt}")
 
-        sql_query = self.prompt_to_sql(message.prompt)
+        sql_query = await self.prompt_to_sql(message.prompt)
         print(f"[LLMAgent generated SQL]: {sql_query}")
 
-        await self.send_message(SQLMessage(query=sql_query, original_prompt=message.prompt), 
+        await self.send_message(
+            SQLMessage(query=sql_query, original_prompt=message.prompt), 
                                 self.db_executor_id)
     
-    def prompt_to_sql(self, prompt: str) -> str:
-        prompt_lower = prompt.lower()
+    async def prompt_to_sql(self, prompt: str) -> str:
+        response = await self.model.create(
+            messages=[
+                SystemMessage(content=self.system_prompt, source="system"),
+                UserMessage(content=prompt, source="user")
+            ]
+        )
+        
+        if response.content.startswith("```"):
+            response.content = response.content.lstrip("`")
+            response.content = response.content.replace("sql", "", 1).replace("SQL", "", 1)
+            response.content = response.content.rstrip("`")
 
-        # 1️⃣ Actor brings the highest income
-        if "actor brings the highest income" in prompt_lower:
-            return """
-            SELECT a.first_name, a.last_name, SUM(p.amount) AS total_income
-            FROM actor a
-            JOIN film_actor fa ON a.actor_id = fa.actor_id
-            JOIN film f ON fa.film_id = f.film_id
-            JOIN inventory i ON f.film_id = i.film_id
-            JOIN rental r ON i.inventory_id = r.inventory_id
-            JOIN payment p ON r.rental_id = p.rental_id
-            GROUP BY a.actor_id, a.first_name, a.last_name
-            ORDER BY total_income DESC
-            LIMIT 1;
-            """
+        return response.content.strip()
 
-        # 2️⃣ Earned per movie yesterday
-        elif "earned per movie yesterday" in prompt_lower:
-            return """
-            SELECT f.title, SUM(p.amount) AS revenue
-            FROM payment p
-            JOIN rental r ON p.rental_id = r.rental_id
-            JOIN inventory i ON r.inventory_id = i.inventory_id
-            JOIN film f ON i.film_id = f.film_id
-            WHERE p.payment_date::date = CURRENT_DATE - INTERVAL '1 day'
-            GROUP BY f.film_id, f.title
-            ORDER BY revenue DESC;
-            """
+        
+# test local mini orca (slow but could work for easier prompts)
+# import asyncio
 
-        # 3️⃣ Location that might need to be closed (example: least revenue)
-        elif "location might need to be closed" in prompt_lower:
-            return """
-            SELECT s.store_id, SUM(p.amount) AS total_revenue
-            FROM payment p
-            JOIN rental r ON p.rental_id = r.rental_id
-            JOIN inventory i ON r.inventory_id = i.inventory_id
-            JOIN store s ON i.store_id = s.store_id
-            GROUP BY s.store_id
-            ORDER BY total_revenue ASC
-            LIMIT 1;
-            """
+# async def test_local_model():
+#     load_dotenv()
+#     model = GPT4All("orca-mini-3b-gguf2-q4_0", model_path="src/models/", allow_download=False, verbose=False)
+#     schema = open("src/models/sakila_table.sql", "r").read()
 
-        # Default fallback
-        else:
-            return "SELECT 'No mock SQL available for this prompt' AS result;"
+#     system_prompt = f"""You are a SQL generation assistant for the Sakila PostgreSQL database.
+#                         Output only the SQL query without any explanations.
 
-import asyncio
+#                         {schema}
+#                         """
+    
+#     with model.chat_session():
+#         print(model.generate(system_prompt + "User: How many films are in the inventory?"))
 
-async def test_openai_model():
-    load_dotenv()
-    model = GPT4All("orca-mini-3b-gguf2-q4_0", model_path="src/models/", allow_download=False, verbose=True)
-    with model.chat_session():
-        print(model.generate("If I give you a schema for an SQL database, can you generate SQL queries for me?"))
-
-if __name__ == "__main__":
-    asyncio.run(test_openai_model())
+# if __name__ == "__main__":
+#     asyncio.run(test_local_model())

@@ -6,3 +6,4 @@ __pycache__/
 /src/test_interpreter.py
 /src/test_executor.py
 /src/test_llm_executor.py
+/src/utils/sakila_schema.py
