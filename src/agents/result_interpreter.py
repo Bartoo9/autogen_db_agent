@@ -4,6 +4,8 @@ from autogen_core import RoutedAgent, MessageContext, default_subscription, mess
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_core.models import UserMessage, SystemMessage
 
+from src.agents.logger import LogMessage
+
 from dotenv import load_dotenv
 import os
 
@@ -16,9 +18,10 @@ class DBResultMessage:
 
 @default_subscription
 class ResultInterpreter(RoutedAgent):
-    def __init__(self):
+    def __init__(self, logger_agent_id):
         super().__init__("Result Interpreter Agent")
         load_dotenv()
+        self.logger_agent_id = logger_agent_id
 
         self.model = OpenAIChatCompletionClient(
             model='gemini-2.0-flash',
@@ -31,7 +34,14 @@ class ResultInterpreter(RoutedAgent):
         data = message.results
 
         if not data:
-            response = "No results found"
+            response = await self.model.create(
+                messages=[
+                    SystemMessage(content="The query returned no results.", source="system"),
+                    UserMessage(content=f"Inform the user that no results were found. \
+                                IN a sentence say why couldn't the prompt: {message.original_prompt} be answered", source="user")
+                ]
+            )
+
         else:
             prompt = f"""Question: {message.original_prompt}
 
@@ -39,6 +49,7 @@ class ResultInterpreter(RoutedAgent):
                         {data}
 
                         Form the answer in natural language using the result.
+                        
 
                         Answer:"""
             
@@ -49,9 +60,13 @@ class ResultInterpreter(RoutedAgent):
                 ]
             )
                 
+        await self.send_message(
+            LogMessage(prompt=message.original_prompt, answer=response.content),
+            self.logger_agent_id)
         
         print(f"\n[ResultInterpreter interpreted results for prompt]: '{message.original_prompt}'")
         print(f"[Interpreted Results]:\n{response.content}\n")
+        
 
 # test local mini orca (slow but could work for easier prompts)
 # import asyncio

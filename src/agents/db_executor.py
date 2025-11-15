@@ -5,6 +5,7 @@ from src.utils.db_connection import execute_query
 from src.agents.result_interpreter import DBResultMessage
 
 import decimal 
+import asyncpg
 
 # db query executor agent
 @dataclass
@@ -42,6 +43,7 @@ class DBExecutor(RoutedAgent):
                 DBResultMessage(results=results, original_prompt=message.original_prompt),
                 DefaultTopicId()
             )
-        
-        except Exception as e:
-            print(f"[DBExecutor error]: {e}")
+
+            
+        except asyncpg.PostgresError:
+            result = 'Query could not be executed.'

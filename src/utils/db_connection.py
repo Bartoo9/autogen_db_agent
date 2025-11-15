@@ -22,12 +22,13 @@ async def get_connection():
         user=DB_USER,
         password=DB_PASSWORD
     )
+
     return conn
 
-# async def test_connection():
-#     conn = await get_connection()
-#     print("connection successful")
-#     await conn.close()
+async def test_connection():
+    conn = await get_connection()
+    print("connection successful")
+    await conn.close()
 
 async def execute_query(query: str):
     conn = await get_connection()
@@ -39,7 +40,8 @@ async def execute_query(query: str):
         await conn.close()
 
 async def test_query():
-    query = 'SELECT * FROM actor LIMIT 5;'
+    query = 'SELECT MAX(payment_date)::date FROM payment;'
+    
     results = await execute_query(query)
 
     for row in results:

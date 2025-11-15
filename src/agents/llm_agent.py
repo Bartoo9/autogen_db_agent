@@ -26,7 +26,7 @@ class LLMAgent(RoutedAgent):
             api_key=os.getenv("GEMINI_API_KEY"),
             base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
         
-        with open("src/models/1-postgres-sakila-schema.sql", "r") as f:
+        with open("src/schema/1-postgres-sakila-schema.sql", "r") as f:
             self.schema = f.read()
         
         self.system_prompt = f"""
@@ -39,6 +39,7 @@ class LLMAgent(RoutedAgent):
                             - You MUST always return exactly one SQL statement.
                             - If multiple values are needed, use subqueries in a single SELECT.
                             - Use aliases when using subqueries to retrive multiple results.
+                            - treat 'today' as sakila database current date: 2006-02-14.
 
                             Schema:
                             {self.schema}
@@ -63,6 +64,7 @@ class LLMAgent(RoutedAgent):
             ]
         )
         
+        # response query clean, was returning mkd format
         if response.content.startswith("```"):
             response.content = response.content.lstrip("`")
             response.content = response.content.replace("sql", "", 1).replace("SQL", "", 1)

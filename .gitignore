@@ -3,7 +3,7 @@
 __pycache__/
 
 /src/models/
-/src/test_interpreter.py
-/src/test_executor.py
-/src/test_llm_executor.py
+/src/tests
 /src/utils/sakila_schema.py
+src/schema
+logs
