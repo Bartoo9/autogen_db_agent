@@ -1,4 +1,4 @@
-AutoGen Sakila Chat — AI-to-Database Query Tool
+# AutoGen Sakila Chat — AI-to-Database Query Tool
 
 This project demonstrates how to use **[Microsoft AutoGen](https://microsoft.github.io/autogen/stable/index.html)** to build a simple **AI chat interface** that can answer natural-language questions using real data from the **Sakila database**.
 
