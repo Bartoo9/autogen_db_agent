@@ -21,24 +21,26 @@ cd autogen_db_agent
 
 2) .venv and dependencies 
 
+```bash
 python -m venv .venv
-(Linux) source .venv/bin/activate
+source .venv/bin/activate
 pip install -r requirements.txt
-
+```
 3) Local PostgreSQL instance (Sakila example)
 
-**[Sakila](https://github.com/sakiladb/postgres?tab=readme-ov-file)**
+**[Sakila](https://github.com/sakiladb/postgres?tab=readme-ov-file)** for details
 
 4) Environment variables config
 
 Set db connection strings and LLM credentials
 
-example: 
+```txt
 DB_HOST=your_host
 DB_PORT=your_port
 ...
 OPEN_AI_API_KEY=sk-..
 GEMINI_API_KEY=...
+```
 
 5) run the main entry point 
 
