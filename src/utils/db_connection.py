@@ -25,7 +25,7 @@ async def get_connection():
 
     return conn
 
-async def test_connection():
+async def test_connection(): 
     conn = await get_connection()
     print("connection successful")
     await conn.close()

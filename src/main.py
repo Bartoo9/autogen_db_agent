@@ -5,7 +5,9 @@ from src.agents.db_executor import DBExecutor
 from src.agents.llm_agent import LLMAgent, PromptMessage
 from src.agents.logger import LoggerAgent
 from src.agents.result_interpreter import ResultInterpreter
+from src.agents.sql_validator import SQLValidatorAgent
 
+# for now registers all of the agents into a sequential runtime
 async def main():
     user_prompt = input('Prompt:')
 
@@ -14,10 +16,14 @@ async def main():
     await DBExecutor().register(runtime,
                                 "db_executor",
                                 lambda: DBExecutor())
-
+    
+    await SQLValidatorAgent.register(runtime,
+                                    "sql_validator_agent",
+                                    lambda: SQLValidatorAgent(db_executor_id=AgentId("db_executor", "default")))
+    
     await LLMAgent.register(runtime,
                             "llm_agent",
-                            lambda: LLMAgent(db_executor_id=AgentId("db_executor", "default")))
+                            lambda: LLMAgent(validator_agent_id=AgentId("sql_validator_agent", "default")))
     
     await ResultInterpreter.register(runtime,
                                      "result_interpreter",

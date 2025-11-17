@@ -3,7 +3,7 @@ from autogen_core import RoutedAgent, MessageContext, default_subscription, mess
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_core.models import UserMessage, SystemMessage
 
-from src.agents.db_executor import SQLMessage
+from src.agents.sql_validator import SQLValidationMessage
 
 import os
 from dotenv import load_dotenv
@@ -16,19 +16,23 @@ class PromptMessage:
 
 @default_subscription
 class LLMAgent(RoutedAgent):
-    def __init__(self, db_executor_id):
+    def __init__(self, validator_agent_id):
         super().__init__("LLM Agent")
         load_dotenv()
 
-        self.db_executor_id = db_executor_id
+        self.validator_agent_id = validator_agent_id
+
+        # works for any openai compatible model
         self.model = OpenAIChatCompletionClient(
             model='gemini-2.0-flash',
             api_key=os.getenv("GEMINI_API_KEY"),
             base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
         
+        # static schmea - should be updated to be schema agostic (perhaps an agent that fetches schema on initi)
         with open("src/schema/1-postgres-sakila-schema.sql", "r") as f:
             self.schema = f.read()
         
+        # prompt engineering for sql generation, should probably be externalized later
         self.system_prompt = f"""
                             You are a SQL generation assistant for the Sakila PostgreSQL database.
 
@@ -53,8 +57,8 @@ class LLMAgent(RoutedAgent):
         print(f"[LLMAgent generated SQL]: {sql_query}")
 
         await self.send_message(
-            SQLMessage(query=sql_query, original_prompt=message.prompt), 
-                                self.db_executor_id)
+            SQLValidationMessage(sql_query=sql_query, original_prompt=message.prompt), 
+                                self.validator_agent_id)
     
     async def prompt_to_sql(self, prompt: str) -> str:
         response = await self.model.create(

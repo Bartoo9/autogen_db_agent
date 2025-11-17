@@ -3,6 +3,7 @@ from autogen_core import RoutedAgent, DefaultTopicId, MessageContext, default_su
 
 from src.utils.db_connection import execute_query
 from src.agents.result_interpreter import DBResultMessage
+from src.agents.sql_validator import SQLValidatedMessage
 
 import decimal 
 import asyncpg
@@ -19,11 +20,11 @@ class DBExecutor(RoutedAgent):
         super().__init__("DB Executor AGent")
 
     @message_handler
-    async def handle_message(self, message: SQLMessage, ctx: MessageContext) -> None:
-        print(f"\n[DBExecutor received query]: {message.query}")
+    async def handle_message(self, message: SQLValidatedMessage, ctx: MessageContext) -> None:
+        print(f"\n[DBExecutor received query]: {message.sql_query}")
 
         try:
-            results = await execute_query(message.query)
+            results = await execute_query(message.sql_query)
 
             def sanitize(obj):
                 if isinstance(obj, list):
@@ -47,3 +48,5 @@ class DBExecutor(RoutedAgent):
             
         except asyncpg.PostgresError:
             result = 'Query could not be executed.'
+
+            print(f"[DBExecutor error]: {result}\n")

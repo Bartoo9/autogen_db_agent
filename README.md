@@ -44,5 +44,10 @@ GEMINI_API_KEY=...
 
 5) run the main entry point 
 
+# Production notes
+
+This repository is a protoype, as such it is a basic show of agentic workflow.
+It uses Gemini API free (or local LLM if you have access to compute), rate limits apply.
+
 
 

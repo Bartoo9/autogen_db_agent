@@ -43,12 +43,14 @@ class ResultInterpreter(RoutedAgent):
             )
 
         else:
+            # should be externalized prompt template, also to have a cleaner code
             prompt = f"""Question: {message.original_prompt}
 
                         Results:
                         {data}
 
                         Form the answer in natural language using the result.
+                        If the results returns a large dictionary, summarize first few results beriefly.
                         
 
                         Answer:"""
