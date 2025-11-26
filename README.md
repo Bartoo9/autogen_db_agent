@@ -29,7 +29,6 @@ pip install -r requirements.txt
 3) Local PostgreSQL instance (Sakila example)
 
 **[Sakila](https://github.com/sakiladb/postgres?tab=readme-ov-file)** for details
-(src/schema should contain the desired schema if a different db is used)
 
 4) Environment variables config
 
@@ -50,4 +49,5 @@ GEMINI_API_KEY=...
 This repository is a protoype, as such it is a basic show of agentic workflow.
 It uses Gemini API free (or local LLM if you have access to compute), rate limits apply.
 
-Demo (Docker): cp .env.example .env, docker compose up --build, docker compose down (stop)
+
+
