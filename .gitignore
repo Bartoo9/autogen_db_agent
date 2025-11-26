@@ -5,5 +5,4 @@ __pycache__/
 /src/models/
 /src/tests
 /src/utils/sakila_schema.py
-src/schema
 logs
