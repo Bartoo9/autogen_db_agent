@@ -24,7 +24,7 @@ class SQLValidatorAgent(RoutedAgent):
         print(f"\n[SQLValidatorAgent received SQL]: {sql_query}")
 
         # check some potentially dangerous statements
-        forbidden_statements = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER']
+        forbidden_statements = ['DROP', 'DELETE', 'INSERT', 'ALTER']
         if any(f in sql_query.upper() for f in forbidden_statements):
             await self.send_message(SQLValidatedMessage(
                 sql_query=sql_query,
