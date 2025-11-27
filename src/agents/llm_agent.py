@@ -22,17 +22,17 @@ class LLMAgent(RoutedAgent):
 
         self.validator_agent_id = validator_agent_id
 
-        # works for any openai compatible model
+        # works for any openai compatible model, here gemini used 
         self.model = OpenAIChatCompletionClient(
             model='gemini-2.0-flash',
             api_key=os.getenv("GEMINI_API_KEY"),
             base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
         
-        # static schmea - should be updated to be schema agostic (perhaps an agent that fetches schema on initi)
+        # static schmea - should be updated to be schema agostic (perhaps an agent that fetches schema on init)
         with open("src/schema/1-postgres-sakila-schema.sql", "r") as f:
             self.schema = f.read()
         
-        # prompt engineering for sql generation, should probably be externalized later
+        # prompt engineering for sql generation, should be externalized later
         self.system_prompt = f"""
                             You are a SQL generation assistant for the Sakila PostgreSQL database.
 
