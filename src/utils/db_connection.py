@@ -48,4 +48,4 @@ async def test_query():
         print(row)
 
 if __name__ == "__main__":
-    asyncio.run(test_query())
+    asyncio.run(test_connection())

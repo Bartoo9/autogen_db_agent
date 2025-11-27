@@ -29,6 +29,7 @@ pip install -r requirements.txt
 3) Local PostgreSQL instance (Sakila example)
 
 **[Sakila](https://github.com/sakiladb/postgres?tab=readme-ov-file)** for details
+(cp .env.example into your repo for the desired postgre db)
 
 4) Environment variables config
 
